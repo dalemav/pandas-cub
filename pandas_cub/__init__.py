@@ -145,7 +145,61 @@ class DataFrame:
             </tbody>
         </table>
         """
-        pass
+        html = '<table><thead><tr><th></th>'
+        for col in self.columns:
+            html += f"<th>{col:10}</th>"
+
+        html += '</tr></thead>'
+        html += "<tbody>"
+
+        only_head = False
+        num_head = 10
+        num_tail = 10
+        if len(self) <= 20:
+            only_head = True
+            num_head = len(self)
+
+        for i in range(num_head):
+            html += f'<tr><td><strong>{i}</strong></td>'
+            for col, values in self._data.items():
+                kind = values.dtype.kind
+                if kind == 'f':
+                    html += f'<td>{values[i]:10.3f}</td>'
+                elif kind == 'b':
+                    html += f'<td>{values[i]}</td>'
+                elif kind == 'O':
+                    v = values[i]
+                    if v is None:
+                        v = 'None'
+                    html += f'<td>{v:10}</td>'
+                else:
+                    html += f'<td>{values[i]:10}</td>'
+            html += '</tr>'
+
+        if not only_head:
+            html += '<tr><strong><td>...</td></strong>'
+            for i in range(len(self.columns)):
+                html += '<td>...</td>'
+            html += '</tr>'
+            for i in range(-num_tail, 0):
+                html += f'<tr><td><strong>{len(self) + i}</strong></td>'
+                for col, values in self._data.items():
+                    kind = values.dtype.kind
+                    if kind == 'f':
+                        html += f'<td>{values[i]:10.3f}</td>'
+                    elif kind == 'b':
+                        html += f'<td>{values[i]}</td>'
+                    elif kind == 'O':
+                        v = values[i]
+                        if v is None:
+                            v = 'None'
+                        html += f'<td>{v:10}</td>'
+                    else:
+                        html += f'<td>{values[i]:10}</td>'
+                html += '</tr>'
+
+        html += '</tbody></table>'
+        return html
 
     @property
     def values(self):
@@ -183,26 +237,54 @@ class DataFrame:
         -------
         A subset of the original DataFrame
         """
+        # If passed a single string
         if isinstance(item, str):
             return DataFrame({item: self._data[item]})
 
+        # If passed a list of strings
         if isinstance(item, list):
             return DataFrame({col: self._data[col] for col in item})
 
+        # If passed a single-column boolean DataFrame
         if isinstance(item, DataFrame):
             if item.shape[1] != 1:
-                raise ValueError("can only pass a single-column boolean DataFrame for selection")
-
+                raise ValueError("can only pass a single-column boolean DataFrame for \
+                selection")
+            # If passed a non-single-column boolean DataFrame
             bool_arr = next(iter(item._data.values()))
             if bool_arr.dtype.kind != 'b':
-                raise TypeError("must be a boolean DataFrame")
-
+                raise TypeError("`item` must be a boolean DataFrame")
             else:
-                return DataFrame({k: self._data[k] for k in item if item[k] == True})
+                return DataFrame({col: value[bool_arr] for col, value in self._data.items()})
+
+        # If passed a tuple
+        if isinstance(item, tuple):
+            return self._getitem_tuple(item)
+
+        # If passed an object that's none of the above
+        else:
+            raise TypeError("`item` must be a string, a list of strings, a single-column \
+            boolean DataFrame, or a tuple")
 
     def _getitem_tuple(self, item):
         # simultaneous selection of rows and cols -> df[rs, cs]
-        pass
+        if len(item) != 2:
+            raise ValueError("`item` length must be 2")
+        row_selection, col_selection = item
+
+        if isinstance(row_selection, int):
+            row_selection = [row_selection]
+
+        if isinstance(col_selection, int):
+            col_selection = [self.columns[col_selection]]
+        if isinstance(col_selection, str):
+            col_selection = [col_selection]
+
+        new_data = {}
+        for col in col_selection:
+            new_data[col] = self._data[col][row_selection]
+
+        return DataFrame(new_data)
 
     def _ipython_key_completions_(self):
         # allows for tab completion when doing df['c
