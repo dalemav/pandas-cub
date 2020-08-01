@@ -295,6 +295,21 @@ class DataFrame:
                 else:
                     new_col_selection.append(col)
             col_selection = new_col_selection
+        elif isinstance(col_selection, slice):
+            start = col_selection.start
+            stop = col_selection.stop
+            step = col_selection.step
+
+            if isinstance(start, str):
+                start = self.columns.index(start)
+
+            if isinstance(stop, str):
+                stop = self.columns.index(stop) + 1
+
+            col_selection = self.columns[start:stop:step]
+
+        else:
+            raise TypeError("column selector must be int, str, list, or slice")
 
         new_data = {col: self._data[col][row_selection] for col in col_selection}
 
