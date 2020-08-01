@@ -358,7 +358,7 @@ class DataFrame:
         -------
         DataFrame
         """
-        pass
+        return self[:n, :]
 
     def tail(self, n=5):
         """
@@ -372,7 +372,7 @@ class DataFrame:
         -------
         DataFrame
         """
-        pass
+        return self[-n:, :]
 
     #### Aggregation Methods ####
 
