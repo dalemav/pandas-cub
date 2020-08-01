@@ -317,11 +317,34 @@ class DataFrame:
 
     def _ipython_key_completions_(self):
         # allows for tab completion when doing df['c
-        pass
+        return self.columns
 
     def __setitem__(self, key, value):
         # adds a new column or a overwrites an old column
-        pass
+        if not isinstance(key, str):
+            raise NotImplementedError("DataFrame can only set a single column")
+
+        if isinstance(value, np.ndarray):
+            if value.ndim != 1:
+                raise ValueError("numpy array must be 1-dimensional")
+            if len(value) != len(self):
+                raise ValueError("lengh of numpy array must match DataFrame")
+        elif isinstance(value, DataFrame):
+            if value.shape[1] != 1:
+                raise ValueError("Dataframe must have a single column")
+            if len(value) != len(self):
+                raise ValueError("Dataframe must match lengths")
+            value = next(iter(value._data.values()))
+        elif isinstance(value, (int, str, float, bool)):
+            value = np.repeat(value, len(self))
+        else:
+            raise TypeError("`value` must be a numpy array, DataFrame, int, str, \
+                float, or bool")
+
+        if value.dtype.kind == 'U':
+            value.astype('object')
+
+        self._data[key] = value
 
     def head(self, n=5):
         """
