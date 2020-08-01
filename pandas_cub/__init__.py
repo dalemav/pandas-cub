@@ -274,15 +274,21 @@ class DataFrame:
 
         if isinstance(row_selection, int):
             row_selection = [row_selection]
+        elif isinstance(row_selection, DataFrame):
+            if row_selection.shape[1] != 1:
+                raise ValueError("`DataFrame has more than one column")
+            row_selection = next(iter(row_selection._data.values()))
+            if row_selection.dtype.kind != 'b':
+                raise TypeError("row selector DataFrame column must have bool dtype")
+        elif not isinstance(row_selection, (list, slice)):
+            raise TypeError("row selector must be an int, list, slice, or DataFrame")
 
         if isinstance(col_selection, int):
             col_selection = [self.columns[col_selection]]
-        if isinstance(col_selection, str):
+        elif isinstance(col_selection, str):
             col_selection = [col_selection]
 
-        new_data = {}
-        for col in col_selection:
-            new_data[col] = self._data[col][row_selection]
+        new_data = {col: self._data[col][row_selection] for col in col_selection}
 
         return DataFrame(new_data)
 
