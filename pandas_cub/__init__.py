@@ -287,6 +287,14 @@ class DataFrame:
             col_selection = [self.columns[col_selection]]
         elif isinstance(col_selection, str):
             col_selection = [col_selection]
+        elif isinstance(col_selection, list):
+            new_col_selection = []
+            for col in col_selection:
+                if isinstance(col, int):
+                    new_col_selection.append(self.columns[col])
+                else:
+                    new_col_selection.append(col)
+            col_selection = new_col_selection
 
         new_data = {col: self._data[col][row_selection] for col in col_selection}
 
