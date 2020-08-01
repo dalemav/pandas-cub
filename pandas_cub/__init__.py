@@ -422,7 +422,13 @@ class DataFrame:
         -------
         A DataFrame
         """
-        pass
+        new_data = {}
+        for col, value in self._data.items():
+            try:
+                new_data[col] = np.array([aggfunc(value)])
+            except TypeError:
+                pass
+        return DataFrame(new_data)
 
     def isna(self):
         """
@@ -432,7 +438,13 @@ class DataFrame:
         -------
         A DataFrame of booleans the same size as the calling DataFrame
         """
-        pass
+        new_data = {}
+        for col, value in self._data.items():
+            if value.dtype.kind == 'O':
+                new_data[col] = value == None
+            else:
+                new_data[col] = np.isnan(value)
+        return DataFrame(new_data)
 
     def count(self):
         """
