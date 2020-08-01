@@ -454,7 +454,11 @@ class DataFrame:
         -------
         A DataFrame
         """
-        pass
+        df = self.isna()
+        new_data = {}
+        for col, value in df._data.items():
+            new_data[col] = np.array([len(df) - value.sum()])
+        return DataFrame(new_data)
 
     def unique(self):
         """
