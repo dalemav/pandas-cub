@@ -505,6 +505,8 @@ class DataFrame:
         dfs = []
         for col, values in self._data.items():
             uniques, counts = np.unique(values, return_counts=True)
+            if normalize == True:
+                counts = counts / np.sum(counts)
             order = np.argsort(-counts)
             uniques = uniques[order]
             counts = counts[order]
