@@ -468,7 +468,13 @@ class DataFrame:
         -------
         A list of one-column DataFrames
         """
-        pass
+        dfs = []
+        for col, values in self._data.items():
+            uniques = np.unique(values)
+            dfs.append(DataFrame({col: uniques}))
+        if len(dfs) == 1:
+            return dfs[0]
+        return dfs
 
     def nunique(self):
         """
@@ -478,7 +484,10 @@ class DataFrame:
         -------
         A DataFrame
         """
-        pass
+        new_data = {}
+        for col, values in self._data.items():
+            new_data[col] = np.array([len(np.unique(values))])
+        return DataFrame(new_data)
 
     def value_counts(self, normalize=False):
         """
