@@ -529,7 +529,14 @@ class DataFrame:
         -------
         A DataFrame
         """
-        pass
+        if not isinstance(columns, dict):
+            raise TypeError("`columns` must be a dict")
+
+        new_data = {}
+        for col, value in self._data.items():
+            new_col = columns.get(col, col)
+            new_data[new_col] = value
+        return DataFrame(new_data)
 
     def drop(self, columns):
         """
@@ -543,7 +550,14 @@ class DataFrame:
         -------
         A DataFrame
         """
-        pass
+        if not isinstance(columns, (str, list)):
+            raise TypeError("`columns` must be a str or list")
+        if isinstance(columns, str):
+            columns = [columns]
+        new_data = self._data
+        for drop_col in columns:
+            new_data.pop(drop_col, None)
+        return DataFrame(new_data)
 
     #### Non-Aggregation Methods ####
 
