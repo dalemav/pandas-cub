@@ -502,7 +502,17 @@ class DataFrame:
         -------
         A list of DataFrames or a single DataFrame if one column
         """
-        pass
+        dfs = []
+        for col, values in self._data.items():
+            uniques, counts = np.unique(values, return_counts=True)
+            order = np.argsort(-counts)
+            uniques = uniques[order]
+            counts = counts[order]
+            new_data = {col: uniques, 'count': counts}
+            dfs.append(DataFrame(new_data))
+        if len(dfs) == 1:
+            return dfs[0]
+        return dfs
 
     def rename(self, columns):
         """
