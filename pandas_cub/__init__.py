@@ -637,20 +637,27 @@ class DataFrame:
         """
         return self._non_agg(np.copy)
 
-    def _non_agg(self, funcname, **kwargs):
+    def _non_agg(self, funcname, kinds='bif', **kwargs):
         """
         Generic non-aggregation function
-    
+
         Parameters
         ----------
         funcname: numpy function
-        kwargs: extra keyword arguments for certain functions
+        args: extra arguments for certain functions
 
         Returns
         -------
         A DataFrame
         """
-        pass
+        new_data = {}
+        for col, values in self._data.items():
+            if values.dtype.kind in kinds:
+                values = funcname(values, **kwargs)
+            else:
+                values = values.copy()
+            new_data[col] = values
+        return DataFrame(new_data)
 
     def diff(self, n=1):
         """
@@ -665,9 +672,18 @@ class DataFrame:
         -------
         A DataFrame
         """
-        def func():
-            pass
-        return self._non_agg(func)
+        if not isinstance(n, int):
+            raise TypeError("`n` must be int")
+        def _get_array_diff(value):
+            value = value.astype('float')
+            value_shifted = np.roll(value, n)
+            value = value - value_shifted
+            if n >= 0:
+                value[:n] = np.nan
+            else:
+                value[n:] = np.nan
+            return value
+        return self._non_agg(_get_array_diff)
 
     def pct_change(self, n=1):
         """
@@ -682,9 +698,18 @@ class DataFrame:
         -------
         A DataFrame
         """
-        def func():
-            pass
-        return self._non_agg(func)
+        if not isinstance(n, int):
+            raise TypeError("`n` must be int")
+        def _get_array_pct_change(value):
+            value = value.astype('float')
+            value_shifted = np.roll(value, n)
+            value = (value - value_shifted) / value_shifted
+            if n >= 0:
+                value[:n] = np.nan
+            else:
+                value[n:] = np.nan
+            return value
+        return self._non_agg(_get_array_pct_change)
 
     #### Arithmetic and Comparison Operators ####
 
@@ -755,7 +780,16 @@ class DataFrame:
         -------
         A DataFrame
         """
-        pass
+        if isinstance(other, DataFrame):
+            if other.shape[1] != 1:
+                raise ValueError("DataFrame must be a single column")
+            else:
+                other = next(iter(other._data.values()))
+        new_data = {}
+        for col, values in self._data.items():
+            method = getattr(values, op)
+            new_data[col] = method(other)
+        return DataFrame(new_data)
 
     def sort_values(self, by, asc=True):
         """
