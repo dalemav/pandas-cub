@@ -804,7 +804,16 @@ class DataFrame:
         -------
         A DataFrame
         """
-        pass
+        if isinstance(by, str):
+            order = np.argsort(self._data[by])
+        elif isinstance(by, list):
+            cols = [self._data[col] for col in by[::-1]]
+            order = np.lexsort(cols)
+        else:
+            raise TypeError('`by` must be a str or a list')
+        if not asc:
+            order = order[::-1]
+        return self[order.tolist(), :]
 
     def sample(self, n=None, frac=None, replace=False, seed=None):
         """
@@ -825,7 +834,14 @@ class DataFrame:
         -------
         A DataFrame
         """
-        pass
+        if seed:
+            np.random.seed(seed)
+        if frac:
+            if frac <= 0:
+                raise ValueError("`frac` must be positive")
+            n = int(frac * len(self))
+        rows = np.random.choice(range(len(self)), n, replace=replace)
+        return self[rows.tolist(), :]
 
     def pivot_table(self, rows=None, columns=None, values=None, aggfunc=None):
         """
