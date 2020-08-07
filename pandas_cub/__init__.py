@@ -208,7 +208,7 @@ class DataFrame:
         -------
         A single 2D NumPy array of the underlying data
         """
-        return np.columns_stack(self._data.values())
+        return np.column_stack(self._data.values())
 
     @property
     def dtypes(self):
